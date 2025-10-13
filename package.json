@@ -1,18 +1,8 @@
 {
   "name": "sales-booster",
   "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "type": "module",
   "dependencies": {
-    "openai": "^6.3.0"
-  },
-  "devDependencies": {
-    "netlify-cli": "^23.9.1"
+    "openai": "^4.0.0"
   }
 }
