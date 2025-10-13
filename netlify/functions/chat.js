@@ -1,3 +1,10 @@
+// CORS headers for Softr -> Netlify calls
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*", // or set to your Softr domain for stricter security
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization"
+};
+
 import OpenAI from "openai";
 
 const SYSTEM_BASE = "You help users craft Etsy listings. Be concise and follow instructions exactly.";
@@ -15,23 +22,32 @@ const PROMPTS = {
 const pickTask = (m) => PROMPTS[m] || PROMPTS.chat;
 
 export async function handler(event) {
+  // Preflight from Softr
+  if (event.httpMethod === "OPTIONS") {
+    return { statusCode: 204, headers: CORS_HEADERS, body: "" };
+  }
+
   if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: "Method Not Allowed" };
+    return { statusCode: 405, headers: CORS_HEADERS, body: "Method Not Allowed" };
   }
 
   try {
     const { userId, listingId, mode, message, imageBase64, imageUrl } = JSON.parse(event.body || "{}");
     if (!userId || !listingId) {
-      return { statusCode: 400, body: JSON.stringify({ error: "userId and listingId required" }) };
+      return { statusCode: 400, headers: CORS_HEADERS, body: JSON.stringify({ error: "userId and listingId required" }) };
     }
 
     // Fetch current listing from Softr
     const current = await softrGetRecord(listingId);
     const history = safeJSON(current?.chat_history);
 
-    const contentBlocks = [{ type: "text", text: message || "" }];
+    const contentBlocks = [{ type: "input_text", text: message || "" }];
     if (imageBase64 || imageUrl) {
-      contentBlocks.push({ type: "image_url", image_url: imageUrl || imageBase64 });
+      const url = imageUrl || imageBase64;
+      contentBlocks.push({
+        type: "input_image",
+        image_url: { url }
+      });
     }
 
     const messages = [
@@ -67,11 +83,15 @@ export async function handler(event) {
 
     return {
       statusCode: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
       body: JSON.stringify({ reply })
     };
   } catch (err) {
-    return { statusCode: 500, body: JSON.stringify({ error: "server_error", detail: String(err) }) };
+    return {
+      statusCode: 500,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({ error: "server_error", detail: String(err) })
+    };
   }
 }
 
