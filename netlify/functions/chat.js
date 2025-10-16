@@ -39,6 +39,17 @@ export async function handler(event) {
 
     // Fetch current listing from Softr
     const current = await softrGetRecord(listingId);
+
+    // Ensure we have a real record id to update; create one if missing or flagged as "new"
+    let effectiveId = listingId;
+    if (!current || listingId === "new" || listingId === "" || listingId === null) {
+      const created = await softrCreateRecord({
+        status: "draft",
+        chat_history: "[]"
+      });
+      effectiveId = created.id;
+    }
+
     const history = safeJSON(current?.chat_history);
 
     const contentBlocks = [{ type: "text", text: message || "" }];
@@ -78,12 +89,12 @@ export async function handler(event) {
     if (mode === "description") patch.description = reply;
     if (mode === "faqs") patch.faqs = reply;
 
-    await softrUpdateRecord(listingId, patch);
+    await softrUpdateRecord(effectiveId, patch);
 
     return {
       statusCode: 200,
       headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-      body: JSON.stringify({ reply })
+      body: JSON.stringify({ reply, listingId: effectiveId })
     };
   } catch (err) {
     return {
@@ -99,6 +110,17 @@ async function softrGetRecord(id) {
   const url = `https://api.softr.io/v1/databases/${process.env.SOFTR_DB_ID}/tables/${process.env.SOFTR_LISTINGS_TABLE_ID}/records/${id}`;
   const r = await fetch(url, { headers: { "Softr-Api-Key": process.env.SOFTR_API_KEY } });
   if (!r.ok) return null;
+  return await r.json();
+}
+
+async function softrCreateRecord(fields) {
+  const url = `https://api.softr.io/v1/databases/${process.env.SOFTR_DB_ID}/tables/${process.env.SOFTR_LISTINGS_TABLE_ID}/records`;
+  const r = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Softr-Api-Key": process.env.SOFTR_API_KEY },
+    body: JSON.stringify(fields)
+  });
+  if (!r.ok) throw new Error("softr create failed");
   return await r.json();
 }
 
