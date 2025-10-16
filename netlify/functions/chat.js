@@ -41,12 +41,11 @@ export async function handler(event) {
     const current = await softrGetRecord(listingId);
     const history = safeJSON(current?.chat_history);
 
-    const contentBlocks = [{ type: "input_text", text: message || "" }];
+    const contentBlocks = [{ type: "text", text: message || "" }];
     if (imageBase64 || imageUrl) {
-      const url = imageUrl || imageBase64;
       contentBlocks.push({
-        type: "input_image",
-        image_url: { url }
+        type: "image_url",
+        image_url: imageUrl || imageBase64
       });
     }
 
