@@ -302,7 +302,7 @@ export default function AppPage() {
     }
   }
 
-  async function ensureListing() {
+  async function ensureListing(): Promise<Listing | null> {
     if (current || !user) return current;
     try {
       const r = await fetch(API('/listings'), {
@@ -320,8 +320,8 @@ export default function AppPage() {
         throw new Error(err?.error || `Error ${r.status}`);
       }
       const j = await r.json();
+      setCurrent(j.listing);
       await refreshList();
-      await fetchOne(j.listing.id);
       return j.listing;
     } catch (err) {
       console.error(err);
@@ -339,7 +339,7 @@ export default function AppPage() {
     if (!active) return;
     setLoading(true);
     try {
-      const r = await fetch(API(`/listings/${current.id}/generate`), {
+      const r = await fetch(API(`/listings/${active.id}/generate`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mode, message: msg, imageUrl }),
@@ -370,9 +370,11 @@ export default function AppPage() {
   }
 
   async function onUploadFile(f: File) {
-    if (!current || !user) return;
+    if (!user) return;
+    const active = current ?? (await ensureListing());
+    if (!active) return;
     try {
-      const r = await fetch(API(`/listings/${current.id}/upload-url`), { method: 'POST', credentials: 'include' });
+      const r = await fetch(API(`/listings/${active.id}/upload-url`), { method: 'POST', credentials: 'include' });
       if (r.status === 401) {
         handleUnauthorized();
         return;
