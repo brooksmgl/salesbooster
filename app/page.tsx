@@ -389,7 +389,7 @@ export default function AppPage() {
       const up = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': f.type }, body: f });
       if (!up.ok) throw new Error('Upload failed');
 
-      const signedResponse = await fetch(API(`/listings/${current.id}/image-url`), {
+      const signedResponse = await fetch(API(`/listings/${active.id}/image-url`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
