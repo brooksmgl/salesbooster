@@ -622,8 +622,8 @@ export default function AppPage() {
               <h2 className="mb-3 text-base font-semibold text-slate-900">Listing Assets</h2>
               <div className="flex flex-col gap-3 pr-1">
                 <Card title="Title" text={current?.title} onCopy={() => copy(current?.title)} />
-                <Card title="Tags (13)" text={current?.tags} onCopy={() => copy(current?.tags)} />
-                <Card title="Description (BB-code)" text={current?.description} onCopy={() => copy(current?.description)} />
+                <Card title="Tags" text={current?.tags} onCopy={() => copy(current?.tags)} />
+                <Card title="Description" text={current?.description} onCopy={() => copy(current?.description)} />
                 <Card title="FAQs" text={current?.faqs} onCopy={() => copy(current?.faqs)} />
               </div>
             </aside>
