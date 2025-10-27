@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --sb-color-background: 161 192 169;
+  --sb-color-foreground: 32 44 36;
+  --sb-color-panel: 250 250 250;
+  --sb-color-border: 221 226 216;
+  --sb-color-muted: 87 99 91;
+  --sb-color-accent: 220 144 70;
+  --sb-color-accent-muted: 245 223 199;
+  --sb-color-danger: 220 38 38;
+
+}
+
+body {
+  @apply bg-background text-foreground font-sans;
+}
+
+#salesbooster-root {
+  min-height: 100vh;
+}
+
+.rich-text {
+  @apply text-[13px] leading-6 text-slate-700 whitespace-pre-wrap break-words max-w-full;
+}
+
+.rich-text p {
+  @apply mb-2;
+}
+
+.rich-text p:last-child {
+  @apply mb-0;
+}
+
+.rich-text strong {
+  @apply font-semibold text-slate-900;
+}
+
+.rich-text em {
+  @apply italic;
+}
+
+.rich-text .sb-center {
+  @apply text-center;
+}
+
+.rich-text .sb-size-16 {
+  @apply text-base font-semibold;
+}
+
+.rich-text .sb-size-default {
+  @apply text-sm font-semibold;
+}
+
+.rich-text .sb-underline {
+  @apply underline;
+}
+
+.rich-text .sb-bullet {
+  @apply block pl-5 text-slate-700;
+  text-indent: -0.75rem;
+}
+
+.rich-text h3 {
+  @apply mt-3 text-sm font-semibold uppercase tracking-wide text-slate-500;
+}
+
+.rich-text h4 {
+  @apply mt-3 text-sm font-semibold text-slate-600;
+}
+
+.rich-text ul.sb-list {
+  @apply my-2 list-disc pl-6 text-[13px] text-slate-700;
+}
+
+.rich-text ul.sb-list li {
+  @apply mb-1;
+}
+
+.rich-text p {
+  @apply mb-2;
+}
