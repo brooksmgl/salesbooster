@@ -551,7 +551,16 @@ export default function AppPage() {
               </section>
               <section className={`${SECTION_CLASS} flex flex-col overflow-hidden`}>
                 {!current ? (
-                  <p className="text-sm text-muted">Create or select a listing to start.</p>
+                  <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
+                    <p className="text-sm text-muted">Create a listing to upload an image or start chatting.</p>
+                    <button
+                      onClick={newListing}
+                      disabled={loading || authLoading}
+                      className={BUTTON_PRIMARY}
+                    >
+                      + Create a New Listing
+                    </button>
+                  </div>
                 ) : (
                   <div className="flex flex-col gap-3 overflow-y-auto pr-2">
                     {current.chat_history?.map((m, i) => (
