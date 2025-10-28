@@ -58,6 +58,8 @@ export default function AppPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const chatRef = useRef<HTMLDivElement | null>(null);
+  const chatLength = current?.chat_history?.length ?? 0;
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -412,6 +414,14 @@ export default function AppPage() {
     }
   }
 
+  useEffect(() => {
+    const el = chatRef.current;
+    if (!el) return;
+    requestAnimationFrame(() => {
+      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+    });
+  }, [chatLength]);
+
   function copy(text?: string | null) {
     if (!text) return;
     navigator.clipboard.writeText(text);
@@ -562,7 +572,7 @@ export default function AppPage() {
                     </button>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-3 overflow-y-auto pr-2">
+                  <div ref={chatRef} className="flex flex-col gap-3 overflow-y-auto pr-2">
                     {current.chat_history?.map((m, i) => (
                       <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                         <MessageBubble message={m} />
