@@ -471,7 +471,7 @@ export default function AppPage() {
         </div>
       ) : (
         <>
-          <div className="grid h-[calc(100vh-48px)] grid-cols-[320px_minmax(0,1fr)_320px] gap-6">
+          <div className="grid h-[calc(100vh-48px)] grid-cols-[320px_minmax(0,1fr)_320px] gap-4">
             <aside className={PANEL_CLASS}>
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-base font-semibold text-slate-900">My Listings</h2>
