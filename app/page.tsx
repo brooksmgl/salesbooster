@@ -559,7 +559,7 @@ export default function AppPage() {
                   </button>
                 </div>
               </section>
-              <section className={`${SECTION_CLASS} flex flex-col overflow-hidden`}>
+              <section className={`${SECTION_CLASS} relative flex flex-col overflow-hidden`}>
                 {!current ? (
                   <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
                     <p className="text-sm text-muted">Create a listing to upload an image or start chatting.</p>
@@ -578,6 +578,16 @@ export default function AppPage() {
                         <MessageBubble message={m} />
                       </div>
                     ))}
+                  </div>
+                )}
+                {loading && current && (
+                  <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-white/75">
+                    <div
+                      className="h-11 w-11 animate-spin rounded-full border-4 border-accent/30 border-t-accent"
+                      role="status"
+                      aria-live="polite"
+                      aria-label="Loading"
+                    />
                   </div>
                 )}
               </section>
@@ -626,16 +636,6 @@ export default function AppPage() {
                   </button>
                 </div>
               </section>
-              {loading && (
-                <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-white/75">
-                  <div
-                    className="h-11 w-11 animate-spin rounded-full border-4 border-accent/30 border-t-accent"
-                    role="status"
-                    aria-live="polite"
-                    aria-label="Loading"
-                  />
-                </div>
-              )}
             </div>
             <aside className={`${PANEL_CLASS} overflow-y-auto`}>
               <h2 className="mb-3 text-base font-semibold text-slate-900">Listing Assets</h2>
