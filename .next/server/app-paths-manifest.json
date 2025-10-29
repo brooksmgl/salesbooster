@@ -1,11 +1,12 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
-  "/api/auth/login/route": "app/api/auth/login/route.js",
   "/api/listings/[id]/generate/route": "app/api/listings/[id]/generate/route.js",
-  "/api/listings/[id]/route": "app/api/listings/[id]/route.js",
   "/api/auth/session/route": "app/api/auth/session/route.js",
+  "/api/auth/login/route": "app/api/auth/login/route.js",
   "/api/listings/[id]/image-url/route": "app/api/listings/[id]/image-url/route.js",
-  "/api/listings/[id]/upload-url/route": "app/api/listings/[id]/upload-url/route.js",
   "/page": "app/page.js",
+  "/api/listings/[id]/route": "app/api/listings/[id]/route.js",
+  "/icon.svg/route": "app/icon.svg/route.js",
+  "/api/listings/[id]/upload-url/route": "app/api/listings/[id]/upload-url/route.js",
   "/api/listings/route": "app/api/listings/route.js"
 }

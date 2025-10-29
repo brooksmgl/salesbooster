@@ -48,6 +48,26 @@ function extractListingFields(message: string) {
   return sections;
 }
 
+function toStringArray(value: unknown): string[] {
+  if (!value) return [];
+  if (Array.isArray(value)) {
+    return value.reduce<string[]>((acc, item) => {
+      if (typeof item === 'string') {
+        acc.push(item);
+      } else if (item != null) {
+        try {
+          acc.push(JSON.stringify(item));
+        } catch {
+          // ignore serialization errors
+        }
+      }
+      return acc;
+    }, []);
+  }
+  if (typeof value === 'string') return [value];
+  return [];
+}
+
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const user = await getSessionUser(req);
   if (!user) {
@@ -131,7 +151,15 @@ Vision: ${listing.vision_summary ?? ''}`;
   if (mode === 'faqs') updates.faqs = reply;
   if (mode === 'read') {
     updates.vision_summary = reply;
-    if (imageUrl) updates.image_url = imageUrl;
+    const existingSummaries = toStringArray(listing.vision_summaries ?? listing.vision_summary);
+    const existingImages = toStringArray(listing.image_urls ?? listing.image_url);
+    updates.vision_summaries = [...existingSummaries, reply];
+    if (imageUrl) {
+      updates.image_url = imageUrl;
+      updates.image_urls = [...existingImages, imageUrl];
+    } else {
+      updates.image_urls = existingImages;
+    }
   }
 
   const { error: e1, data: updated } = await sb
