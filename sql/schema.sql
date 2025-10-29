@@ -18,8 +18,6 @@ create table if not exists public.listings (
   faqs text,                      -- optional (JSON or text; using text for simplicity)
   vision_summary text,            -- from READ
   image_url text,                 -- original upload (signed or public URL)
-  vision_summaries jsonb default '[]'::jsonb,
-  image_urls jsonb default '[]'::jsonb,
   status text default 'draft' check (status in ('draft','active','archived')),
   chat_history jsonb default '[]',
   created_at timestamptz default now(),
@@ -38,12 +36,6 @@ create policy "listings owner full"
   on public.listings for all
   using (user_id = auth.uid())
   with check (user_id = auth.uid());
-
-alter table public.listings
-  add column if not exists vision_summaries jsonb default '[]'::jsonb;
-
-alter table public.listings
-  add column if not exists image_urls jsonb default '[]'::jsonb;
 
 -- Updated-at trigger
 create or replace function public.set_updated_at()

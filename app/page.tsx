@@ -11,8 +11,6 @@ type Listing = {
   faqs?: string | null;
   vision_summary?: string | null;
   image_url?: string | null;
-  vision_summaries?: string[] | null;
-  image_urls?: string[] | null;
   chat_history: { role: 'user' | 'assistant'; content: string }[];
 };
 
@@ -416,15 +414,6 @@ export default function AppPage() {
     }
   }
 
-  async function onUploadFiles(files: File[]) {
-    if (files.length === 0) return;
-    for (const file of files) {
-      if (!user) break;
-      // eslint-disable-next-line no-await-in-loop
-      await onUploadFile(file);
-    }
-  }
-
   useEffect(() => {
     const el = chatRef.current;
     if (!el) return;
@@ -440,7 +429,7 @@ export default function AppPage() {
     setTimeout(() => setNotice(null), 1200);
   }
 
-  const altCardContent = buildAltCardContent(current);
+  const altText = extractAltText(current?.vision_summary);
 
   return (
     <div className="min-h-screen bg-background px-6 py-6 text-foreground">
@@ -611,15 +600,14 @@ export default function AppPage() {
                     type="file"
                     accept="image/*"
                     className="hidden"
-                    multiple
                     onChange={(e) => {
-                      const selected = e.target.files ? Array.from(e.target.files) : [];
-                      if (selected.length > 0) void onUploadFiles(selected);
+                      const f = e.target.files?.[0];
+                      if (f) void onUploadFile(f);
                       if (fileRef.current) fileRef.current.value = '';
                     }}
                   />
                   <button disabled={!current || loading || authLoading} className={BUTTON_PRIMARY} onClick={() => fileRef.current?.click()}>
-                    Upload Images
+                    Upload Image
                   </button>
                   <input
                     value={input}
@@ -657,7 +645,7 @@ export default function AppPage() {
                 <Card title="Title" text={current?.title} onCopy={() => copy(current?.title)} />
                 <Card title="Tags" text={current?.tags} onCopy={() => copy(current?.tags)} />
                 <Card title="Description" text={current?.description} onCopy={() => copy(current?.description)} />
-                <Card title="Alt Text" text={altCardContent} onCopy={() => copy(altCardContent)} />
+                <Card title="Alt Text" text={altText} onCopy={() => copy(altText)} />
               </div>
             </aside>
           </div>
@@ -696,99 +684,17 @@ function renderRichText(text?: string | null) {
   return <div className="rich-text" dangerouslySetInnerHTML={{ __html: markdownToHtml(normalized) }} />;
 }
 
-type AltDetails = {
-  altShort: string | null;
-  altExtended: string | null;
-  caption: string | null;
-};
-
-function extractAltDetails(vision?: string | null): AltDetails | null {
+function extractAltText(vision?: string | null) {
   if (!vision) return null;
-  const lines = vision.split('\n');
-  let altShort: string | null = null;
-  const altExtendedParts: string[] = [];
-  let caption: string | null = null;
-  let capturingExtended = false;
-
-  for (const rawLine of lines) {
-    const line = rawLine.trim();
-    if (!line) {
-      if (capturingExtended) {
-        altExtendedParts.push('');
-      }
-      continue;
-    }
-    if (/^Alt\s*\(concise/i.test(line)) {
-      altShort = line.replace(/^Alt\s*\(concise[^)]*\):\s*/i, '').trim() || null;
-      capturingExtended = false;
-      continue;
-    }
-    if (/^Alt\s*\(extended/i.test(line)) {
-      const rest = line.replace(/^Alt\s*\(extended[^)]*\):\s*/i, '').trim();
-      altExtendedParts.length = 0;
-      if (rest) altExtendedParts.push(rest);
-      capturingExtended = true;
-      continue;
-    }
-    if (/^Caption:/i.test(line)) {
-      caption = line.replace(/^Caption:\s*/i, '').trim() || null;
-      capturingExtended = false;
-      continue;
-    }
-    if (/^[A-Za-z][^:]*:\s*/.test(line)) {
-      capturingExtended = false;
-      continue;
-    }
-    if (capturingExtended) {
-      altExtendedParts.push(line);
+  const patterns = [
+    /^[-*\s]*Alt(?:\s*\(<=?\s*125 chars\))?:\s*(.+)$/im,
+    /^Alt text:\s*(.+)$/im,
+  ];
+  for (const pattern of patterns) {
+    const match = vision.match(pattern);
+    if (match?.[1]) {
+      return match[1].trim();
     }
   }
-
-  const altExtended = altExtendedParts.join(' ').replace(/\s+/g, ' ').trim() || null;
-
-  if (!altShort && !altExtended && !caption) return null;
-  return {
-    altShort,
-    altExtended,
-    caption,
-  };
-}
-
-function buildAltCardContent(listing: Listing | null) {
-  if (!listing) return null;
-  const summaries =
-    Array.isArray(listing.vision_summaries) && listing.vision_summaries.length > 0
-      ? listing.vision_summaries
-      : listing.vision_summary
-        ? [listing.vision_summary]
-        : [];
-  if (summaries.length === 0) return null;
-  const images =
-    Array.isArray(listing.image_urls) && listing.image_urls.length > 0
-      ? listing.image_urls
-      : listing.image_url
-        ? [listing.image_url]
-        : [];
-
-  const entries = summaries
-    .map((summary, idx) => {
-      if (!summary) return null;
-      const details = extractAltDetails(summary);
-      const label = `Image ${idx + 1}`;
-      const lines = [`**${label}**`];
-
-      if (details?.altShort) lines.push(`- Alt (<=125 chars): ${details.altShort}`);
-      if (details?.altExtended) lines.push(`- Alt (extended): ${details.altExtended}`);
-      if (details?.caption) lines.push(`- Caption: ${details.caption}`);
-
-      if (lines.length === 1) {
-        lines.push(`- ${summary.trim()}`);
-      }
-
-      return lines.join('\n');
-    })
-    .filter((entry): entry is string => Boolean(entry));
-
-  if (entries.length === 0) return null;
-  return entries.join('\n\n---\n\n');
+  return null;
 }
