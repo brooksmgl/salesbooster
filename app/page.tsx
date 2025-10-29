@@ -577,7 +577,7 @@ export default function AppPage() {
                   <div ref={chatRef} className="flex flex-col gap-3 overflow-y-auto pr-2">
                     {current.chat_history?.map((m, i) => (
                       <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <MessageBubble message={m} />
+                        <MessageBubble message={m} listingId={current?.id} />
                       </div>
                     ))}
                   </div>
