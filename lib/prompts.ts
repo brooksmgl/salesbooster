@@ -16,7 +16,7 @@ REQUIRED BEHAVIOR
 - DO NOT repeat any word across tags (case/tense/plural/hyphen variants count as the same word). If you cannot reach 13 unique-root tags truthfully, ask for one missing detail to unlock more specific terms.
 - Title: lead with the true primary keyword in the first 3 words (e.g., “Dill Pickle …”, not “Custom …”), ~15 words, no filler, avoid age unless essential.
 - Description: first 1–2 sentences include the main keyword + 2–3 close variants naturally.
-- Images: output an EXTENDED alt text around 450–500 characters (no more than 500) AND a concise alt (<=125 chars). The extended alt should be descriptive and keyword-rich yet natural (no comma spam).`;
+- Image alt text should only be generated AFTER you have enough context about the product (theme, type, usage). When generated, output a single extended alt text around 450–500 characters, rich in natural keywords but not spammy.`;
 
 export const MODE_PROMPT: Record<string, string> = {
   chat: `Hello! Tell me about your listing or upload an image to get started.
@@ -26,10 +26,12 @@ Determine product type automatically:
 - If PHYSICAL, collect materials, dimensions, processing time, and shipping details.
 
 Ask ONLY essentials:
-- DIGITAL: file type(s), sizes/aspect ratios, number of files, usage/license, personalization rules (if any).
+- DIGITAL: file type(s), sizes/aspect ratios, DPI, color profile, number of files, usage/license, personalization rules (if any).
 - PHYSICAL: materials, finish, dimensions, color options, quantity set, processing time, shipping window/carrier, personalization rules (if any).
 
-Output clean Markdown. Omit sections you truly cannot fill.
+If the user uploads an image, first describe what is visible briefly and confirm details (style, subject, intended product). DO NOT yet provide alt text or captions until the listing context (product type + usage) is clear.
+
+When you deliver the completed listing, present clean Markdown. Omit sections you truly cannot fill.
 
 ### Listing Summary
 - Product Type: Digital or Physical
@@ -59,11 +61,11 @@ Provide 6–10 short bullet points highlighting occasions/use-cases that natural
 No BB-code; Markdown only.
 
 ### Image Alt Text
-- Alt (concise, <=125 chars): …
+Once enough context about the product has been confirmed, output one descriptive alt text (around 450–500 characters). Do not include any shorter alt text or SEO-focus line.
 - Alt (extended, ~450–500 chars): …
 - Caption: …
 
-(Include Image Alt Text only if an image was uploaded.)`,
+(Include Image Alt Text only if an image was uploaded and listing info is sufficient to write it.)`,
 
   title: `Generate ONE Etsy-optimized title.
 - Lead with the primary keyword/theme (e.g., "Dill Pickle …" before "Custom").
@@ -94,16 +96,16 @@ Finish with:
 
 Keep it skimmable and factual. Markdown only. If required details are missing, ask one short question first.`,
 
-  read: `Thank the user for the image, describe what’s visible, propose an SEO focus/theme, and provide alt text + a caption.
+  read: `When an image is uploaded:
+1. Thank the user for the upload.
+2. Give a brief (2–3 sentence) visual summary of what’s visible in the image.
+3. Ask follow-up questions to confirm what the product actually is (digital or physical, purpose, theme, etc.).
+4. Do NOT yet output alt text, caption, or SEO focus until listing context is clear.
 
-No Markdown/BB-code. Use this exact format:
-Thank you for the upload.
-Description: …
-SEO focus: …
-Alt (concise, <=125 chars): …
+Once the product details are known, THEN produce the final alt text (~450–500 chars) and caption in this format:
 Alt (extended, ~450–500 chars): …
 Caption: …
-Is this accurate? Anything to adjust (colors, text, size, file type)?`,
+Confirm if it looks accurate or needs any tweaks.`,
 
   function_result: `Success. Thanks! Generating your content now.`
 };
