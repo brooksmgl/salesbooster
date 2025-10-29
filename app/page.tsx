@@ -429,6 +429,8 @@ export default function AppPage() {
     setTimeout(() => setNotice(null), 1200);
   }
 
+  const altText = extractAltText(current?.vision_summary);
+
   return (
     <div className="min-h-screen bg-background px-6 py-6 text-foreground">
       {!authChecked ? (
@@ -643,7 +645,7 @@ export default function AppPage() {
                 <Card title="Title" text={current?.title} onCopy={() => copy(current?.title)} />
                 <Card title="Tags" text={current?.tags} onCopy={() => copy(current?.tags)} />
                 <Card title="Description" text={current?.description} onCopy={() => copy(current?.description)} />
-                <Card title="FAQs" text={current?.faqs} onCopy={() => copy(current?.faqs)} />
+                <Card title="Alt Text" text={altText} onCopy={() => copy(altText)} />
               </div>
             </aside>
           </div>
@@ -680,4 +682,19 @@ function renderRichText(text?: string | null) {
     .replace(/\[u\]|\[center\]|\[size=\d+\]/gi, '')
     .replace(/\[\/u\]|\[\/center\]|\[\/size\]/gi, '');
   return <div className="rich-text" dangerouslySetInnerHTML={{ __html: markdownToHtml(normalized) }} />;
+}
+
+function extractAltText(vision?: string | null) {
+  if (!vision) return null;
+  const patterns = [
+    /^[-*\s]*Alt(?:\s*\(<=?\s*125 chars\))?:\s*(.+)$/im,
+    /^Alt text:\s*(.+)$/im,
+  ];
+  for (const pattern of patterns) {
+    const match = vision.match(pattern);
+    if (match?.[1]) {
+      return match[1].trim();
+    }
+  }
+  return null;
 }
