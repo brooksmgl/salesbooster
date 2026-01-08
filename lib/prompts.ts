@@ -13,6 +13,7 @@ ASK ONLY WHAT’S NECESSARY
 
 REQUIRED BEHAVIOR
 - Generate exactly 13 tags; each <= 20 characters; theme-first relevancy; mix head terms + modifiers.
+- SPECIFICITY RULE: Avoid generic standalone tags (e.g., "sewing patterns", "pet supplies", "crafting tutorial"). Instead, combine the product's core subject with modifiers to create specific, searchable phrases (e.g., "dog leash pattern", "pet sewing pattern", "fabric dog leash"). Every tag should feel like something a buyer would actually search for when looking for THIS specific product.
 - DO NOT repeat any word across tags (case/tense/plural/hyphen variants count as the same word). If you cannot reach 13 unique-root tags truthfully, ask for one missing detail to unlock more specific terms.
 - Title: lead with the true primary keyword in the first 3 words (e.g., “Dill Pickle …”, not “Custom …”), ~15 words, no filler, avoid age unless essential.
 - Description: first 1–2 sentences include the main keyword + 2–3 close variants naturally.
@@ -45,7 +46,7 @@ When you deliver the completed listing, present clean Markdown. Omit sections yo
 <title on its own line — start with the true primary keyword/theme>
 
 ### Tags
-tag1, tag2, … (exactly 13; <=20 chars; no duplicates; **no repeated words across tags**; mix of head + modifiers)
+tag1, tag2, … (exactly 13; <=20 chars; no duplicates; **no repeated words across tags**; mix of head + modifiers; **avoid generic standalone terms** — always combine the core product subject with modifiers for specificity)
 
 ### Description
 Open with 2–3 concise sentences that naturally include the primary keyword and 2–3 close variants. Then add skimmable sections:
@@ -78,6 +79,7 @@ Rules:
 - Each tag <= 20 characters.
 - No duplicates AND no repeated words across different tags (treat singular/plural, hyphen/space, and case as the same word).
 - Prioritize the real theme (e.g., dill pickle, burger/food) over generic "custom".
+- SPECIFICITY IS KEY: Avoid generic standalone tags like "sewing patterns", "pet supplies", or "crafting tutorial". Instead, always combine the product's core subject with modifiers. Good: "dog leash pattern", "pet sewing pattern", "fabric dog leash". Bad: "sewing patterns", "pet supplies", "easy sewing". Every tag should be specific enough that a buyer searching for THIS product would use it.
 - Mix head terms + specific modifiers (occasion, format, style, audience if relevant; file format for digital; material for physical).
 If you cannot reach 13 unique-root tags truthfully, ask for one specific missing detail (e.g., file format, size, style) to unlock more precise tags.`,
 
