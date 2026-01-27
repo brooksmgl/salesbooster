@@ -107,6 +107,10 @@ Vision: ${listing.vision_summary ?? ''}`;
     reply = resp.choices[0]?.message?.content?.trim() ?? '';
   } catch (err) {
     console.error(err);
+    const errMsg = err instanceof Error ? err.message : '';
+    if (errMsg.includes('unsupported image') || errMsg.includes('following formats')) {
+      return withCORS(NextResponse.json({ error: 'This file type is not supported. Please use PNG, JPEG, GIF, or WebP.' }, { status: 400 }));
+    }
     return withCORS(NextResponse.json({ error: 'AI request failed. Check OPENAI_API_KEY and usage limits.' }, { status: 500 }));
   }
 

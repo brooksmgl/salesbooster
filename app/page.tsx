@@ -371,8 +371,14 @@ export default function AppPage() {
     }
   }
 
+  const SUPPORTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+
   async function onUploadFile(f: File) {
     if (!user) return;
+    if (!SUPPORTED_IMAGE_TYPES.includes(f.type)) {
+      setNotice('This file type is not supported. Please use PNG, JPEG, GIF, or WebP.');
+      return;
+    }
     const active = current ?? (await ensureListing());
     if (!active) return;
     try {
@@ -598,7 +604,7 @@ export default function AppPage() {
                   <input
                     ref={fileRef}
                     type="file"
-                    accept="image/*"
+                    accept="image/png,image/jpeg,image/gif,image/webp"
                     className="hidden"
                     onChange={(e) => {
                       const f = e.target.files?.[0];
