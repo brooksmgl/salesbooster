@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServiceClient } from '@/lib/supabaseServer';
+import { findUserByEmail } from '@/lib/airtable';
 import { withCORS, options } from '@/lib/cors';
 import { attachSessionCookie, clearSessionCookie } from '@/lib/session';
 
@@ -12,6 +13,7 @@ export async function POST(req: NextRequest) {
     return withCORS(NextResponse.json({ error: 'Valid email required' }, { status: 400 }));
   }
 
+  // Try Supabase first
   const sb = getServiceClient();
   const { data, error } = await sb
     .from('users')
@@ -19,13 +21,21 @@ export async function POST(req: NextRequest) {
     .ilike('email', normalized)
     .single();
 
-  if (error || !data) {
-    return withCORS(NextResponse.json({ error: 'Email not found' }, { status: 401 }));
+  if (!error && data) {
+    const res = withCORS(NextResponse.json({ user: { id: data.id, email: data.email ?? null } }));
+    attachSessionCookie(res, { id: data.id, email: data.email ?? null, source: 'supabase' });
+    return res;
   }
 
-  const res = withCORS(NextResponse.json({ user: { id: data.id, email: data.email ?? null } }));
-  attachSessionCookie(res, { id: data.id, email: data.email ?? null });
-  return res;
+  // Fallback to Airtable (members + staff tables)
+  const atUser = await findUserByEmail(normalized);
+  if (atUser) {
+    const res = withCORS(NextResponse.json({ user: { id: atUser.id, email: atUser.email } }));
+    attachSessionCookie(res, { id: atUser.id, email: atUser.email, source: 'airtable' });
+    return res;
+  }
+
+  return withCORS(NextResponse.json({ error: 'Email not found' }, { status: 401 }));
 }
 
 export async function DELETE() {

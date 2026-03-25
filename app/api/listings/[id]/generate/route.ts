@@ -8,7 +8,9 @@ import OpenAI from 'openai';
 
 export { options as OPTIONS };
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+function getOpenAI() {
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+}
 
 type Mode = 'chat' | 'read' | 'title' | 'tags' | 'description' | 'faqs';
 
@@ -99,7 +101,7 @@ Vision: ${listing.vision_summary ?? ''}`;
 
   let reply = '';
   try {
-    const resp = await openai.chat.completions.create({
+    const resp = await getOpenAI().chat.completions.create({
       model: 'gpt-4o-mini',
       messages,
       temperature: mode === 'title' || mode === 'tags' ? 0.4 : 0.6,
