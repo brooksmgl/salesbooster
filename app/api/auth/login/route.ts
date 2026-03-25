@@ -15,12 +15,16 @@ export async function POST(req: NextRequest) {
   const sb = getServiceClient();
   const { data, error } = await sb
     .from('users')
-    .select('id, email')
+    .select('id, email, is_active')
     .ilike('email', normalized)
     .single();
 
   if (error || !data) {
     return withCORS(NextResponse.json({ error: 'Email not found' }, { status: 401 }));
+  }
+
+  if (!data.is_active) {
+    return withCORS(NextResponse.json({ error: 'Your account access has been deactivated. Please contact support.' }, { status: 403 }));
   }
 
   const res = withCORS(NextResponse.json({ user: { id: data.id, email: data.email ?? null } }));
