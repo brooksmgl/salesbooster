@@ -188,12 +188,19 @@ Vision: ${listing.vision_summary ?? ''}`;
     });
     reply = resp.choices[0]?.message?.content?.trim() ?? '';
   } catch (err) {
-    console.error(err);
+    // Log full technical detail server-side for diagnosis (status/code from the
+    // OpenAI SDK error) — this never reaches the user.
+    const status = (err as { status?: number })?.status;
+    const code = (err as { code?: string })?.code;
+    console.error('OpenAI generate failed', { mode, status, code, err });
+
     const errMsg = err instanceof Error ? err.message : '';
     if (errMsg.includes('unsupported image') || errMsg.includes('following formats')) {
       return withCORS(NextResponse.json({ error: 'This file type is not supported. Please use PNG, JPEG, GIF, or WebP.' }, { status: 400 }));
     }
-    return withCORS(NextResponse.json({ error: 'AI request failed. Check OPENAI_API_KEY and usage limits.' }, { status: 500 }));
+    // User-facing copy only — never expose internal config names (OPENAI_API_KEY)
+    // or "usage limits". Keep it calm, on-brand, and actionable for the member.
+    return withCORS(NextResponse.json({ error: "We couldn't generate that right now. Please try again in a moment." }, { status: 503 }));
   }
 
   // Enforce tag rules in code before anything is stored or shown to the user.
