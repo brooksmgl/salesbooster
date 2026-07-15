@@ -198,6 +198,13 @@ Vision: ${listing.vision_summary ?? ''}`;
     if (errMsg.includes('unsupported image') || errMsg.includes('following formats')) {
       return withCORS(NextResponse.json({ error: 'This file type is not supported. Please use PNG, JPEG, GIF, or WebP.' }, { status: 400 }));
     }
+    // Oversized / unreadable image: OpenAI returns `invalid_image` ("Image size
+    // exceeds the limit" / "Failed to download image"). Tell the member what to
+    // do instead of the generic toast — the client now downscales before upload,
+    // so this is the backstop for anything that still slips through.
+    if (code === 'invalid_image' || errMsg.toLowerCase().includes('image size exceeds')) {
+      return withCORS(NextResponse.json({ error: 'That image is too large or could not be read. Please upload a smaller photo — try cropping it or using a lower-resolution version.' }, { status: 400 }));
+    }
     // User-facing copy only — never expose internal config names (OPENAI_API_KEY)
     // or "usage limits". Keep it calm, on-brand, and actionable for the member.
     return withCORS(NextResponse.json({ error: "We couldn't generate that right now. Please try again in a moment." }, { status: 503 }));

@@ -372,6 +372,37 @@ export default function AppPage() {
   }
 
   const SUPPORTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+  const MAX_IMAGE_EDGE = 1536; // OpenAI vision rejects very large images; cap the long edge before upload.
+
+  // Downscale + re-encode an image so it stays well under OpenAI's vision size
+  // limit (a raw phone photo can exceed it and come back as `invalid_image`).
+  // Caps the long edge at MAX_IMAGE_EDGE and re-encodes as JPEG. Falls back to
+  // the original file if anything goes wrong (e.g. decode/canvas unsupported).
+  async function downscaleImage(f: File): Promise<Blob> {
+    try {
+      const bitmap = await createImageBitmap(f);
+      const scale = Math.min(1, MAX_IMAGE_EDGE / Math.max(bitmap.width, bitmap.height));
+      const w = Math.max(1, Math.round(bitmap.width * scale));
+      const h = Math.max(1, Math.round(bitmap.height * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return f;
+      // White backfill so transparent PNGs don't flatten to black in JPEG.
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(bitmap, 0, 0, w, h);
+      bitmap.close?.();
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob((b) => resolve(b), 'image/jpeg', 0.85)
+      );
+      return blob ?? f;
+    } catch (err) {
+      console.error('downscaleImage failed; uploading original', err);
+      return f;
+    }
+  }
 
   async function onUploadFile(f: File) {
     if (!user) return;
@@ -394,7 +425,8 @@ export default function AppPage() {
       const j = await r.json();
       const { uploadUrl, path } = j;
 
-      const up = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': f.type }, body: f });
+      const uploadBlob = await downscaleImage(f);
+      const up = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': 'image/jpeg' }, body: uploadBlob });
       if (!up.ok) throw new Error('Upload failed');
 
       const signedResponse = await fetch(API(`/listings/${active.id}/image-url`), {
