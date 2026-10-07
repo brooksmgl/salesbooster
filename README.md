@@ -48,6 +48,10 @@ Set `ALLOWED_ORIGIN=http://localhost:3000` during local test if embedding elsewh
 - `DELETE /api/listings/:id` → remove a listing
 - `POST /api/listings/:id/upload-url` → signed upload URL (Supabase Storage)
 - `POST /api/listings/:id/generate` → modes: chat | read | title | tags | description | faqs
+- `POST /api/admin/users` → grant or revoke access. Called by GHL workflows (contract signed, the Sales Booster Users form, offboarding). Needs `Authorization: Bearer <SB_ADMIN_TOKEN>` (or `?token=`). Body `{ "email": "...", "action": "add" | "remove" }` (`action` may also be a query param). `add` creates the user or reactivates them; `remove` sets `is_active = false` and never deletes, so listings are kept. Unknown email on remove is a no-op. Replaces the n8n "Add/Remove User to Sales Booster" workflow.
+
+## Environment (admin endpoint)
+- `SB_ADMIN_TOKEN`: long random secret shared with GHL. Set it in Netlify for all contexts. The repo is public, so it must never be committed.
 
 ## Notes & Limits
 - In-memory rate limiter; for multi-region use Redis/Upstash
