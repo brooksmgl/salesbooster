@@ -57,8 +57,12 @@ export default function AppPage() {
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  const [recording, setRecording] = useState(false);
+  const [transcribing, setTranscribing] = useState(false);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const chatRef = useRef<HTMLDivElement | null>(null);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const recordTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const chatLength = current?.chat_history?.length ?? 0;
 
   useEffect(() => {
@@ -460,6 +464,90 @@ export default function AppPage() {
     });
   }, [chatLength]);
 
+  // Stop any in-progress recording (and release the mic) if the page unmounts.
+  useEffect(() => {
+    return () => {
+      if (recordTimerRef.current) clearTimeout(recordTimerRef.current);
+      const rec = recorderRef.current;
+      if (rec && rec.state !== 'inactive') {
+        rec.onstop = null;
+        rec.stop();
+        rec.stream.getTracks().forEach((t) => t.stop());
+      }
+    };
+  }, []);
+
+  async function startDictation() {
+    if (typeof window === 'undefined' || !navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+      setNotice("Dictation isn't supported in this browser. Try Chrome or Safari.");
+      return;
+    }
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (err) {
+      const name = (err as DOMException)?.name;
+      setNotice(
+        name === 'NotAllowedError'
+          ? 'Microphone access is blocked. Allow the microphone for this site in your browser to use dictation.'
+          : "We couldn't find a microphone. Check that one is connected and try again."
+      );
+      return;
+    }
+
+    // Chrome/Firefox record webm, Safari records mp4.
+    const mimeType = ['audio/webm', 'audio/mp4'].find((t) => MediaRecorder.isTypeSupported(t));
+    const rec = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+    const chunks: Blob[] = [];
+    rec.ondataavailable = (e) => {
+      if (e.data.size > 0) chunks.push(e.data);
+    };
+    rec.onstop = () => {
+      stream.getTracks().forEach((t) => t.stop());
+      if (recordTimerRef.current) clearTimeout(recordTimerRef.current);
+      recordTimerRef.current = null;
+      recorderRef.current = null;
+      setRecording(false);
+      const type = rec.mimeType || mimeType || 'audio/webm';
+      void transcribe(new Blob(chunks, { type }));
+    };
+    recorderRef.current = rec;
+    rec.start();
+    setRecording(true);
+    setNotice(null);
+    // Hard stop at 2 minutes to stay under the server's upload limit.
+    recordTimerRef.current = setTimeout(() => stopDictation(), 2 * 60 * 1000);
+  }
+
+  function stopDictation() {
+    const rec = recorderRef.current;
+    if (rec && rec.state !== 'inactive') rec.stop();
+  }
+
+  async function transcribe(blob: Blob) {
+    if (blob.size === 0) return;
+    setTranscribing(true);
+    try {
+      const ext = blob.type.includes('mp4') ? 'mp4' : 'webm';
+      const form = new FormData();
+      form.append('audio', blob, `dictation.${ext}`);
+      const res = await fetch(API('/transcribe'), { method: 'POST', body: form });
+      const data = await safeJson(res);
+      if (!res.ok) throw new Error(data?.error || 'Dictation failed');
+      const text = (data?.text || '').trim();
+      if (!text) {
+        setNotice("We didn't catch that. Please try again.");
+        return;
+      }
+      setInput((prev) => (prev.trim() ? `${prev.trimEnd()} ${text}` : text));
+    } catch (err) {
+      console.error(err);
+      setNotice((err as Error).message || 'Dictation failed');
+    } finally {
+      setTranscribing(false);
+    }
+  }
+
   function copy(text?: string | null) {
     if (!text) return;
     navigator.clipboard.writeText(text);
@@ -647,10 +735,37 @@ export default function AppPage() {
                   <button disabled={!current || loading || authLoading} className={BUTTON_PRIMARY} onClick={() => fileRef.current?.click()}>
                     Upload Image
                   </button>
+                  <button
+                    type="button"
+                    disabled={authLoading || transcribing}
+                    className={
+                      recording
+                        ? BUTTON_PRIMARY.replace('bg-accent px-4', 'bg-red-600 px-4').replace('hover:bg-accent/90', 'hover:bg-red-700')
+                        : BUTTON_PRIMARY
+                    }
+                    onClick={() => (recording ? stopDictation() : void startDictation())}
+                    aria-label={recording ? 'Stop dictation' : 'Start dictation'}
+                    title={recording ? 'Stop and add to the box' : 'Dictate instead of typing'}
+                  >
+                    {transcribing ? (
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" role="status" aria-label="Transcribing" />
+                    ) : recording ? (
+                      <span className="flex items-center gap-2">
+                        <span className="h-2.5 w-2.5 animate-pulse rounded-sm bg-white" aria-hidden="true" />
+                        Stop
+                      </span>
+                    ) : (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <rect x="9" y="2" width="6" height="12" rx="3" />
+                        <path d="M5 10a7 7 0 0 0 14 0" />
+                        <line x1="12" y1="17" x2="12" y2="22" />
+                      </svg>
+                    )}
+                  </button>
                   <input
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder="Describe your product..."
+                    placeholder={recording ? 'Listening... tap Stop when you are done' : transcribing ? 'Turning your words into text...' : 'Describe your product...'}
                     className={`${INPUT_CLASS} flex-1`}
                     disabled={authLoading}
                     onKeyDown={(e) => {
