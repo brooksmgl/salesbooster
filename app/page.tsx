@@ -735,49 +735,44 @@ export default function AppPage() {
                   <button disabled={!current || loading || authLoading} className={BUTTON_PRIMARY} onClick={() => fileRef.current?.click()}>
                     Upload Image
                   </button>
-                  <button
-                    type="button"
-                    disabled={authLoading || transcribing}
-                    className={
-                      recording
-                        ? BUTTON_PRIMARY.replace('bg-accent px-4', 'bg-red-600 px-4').replace('hover:bg-accent/90', 'hover:bg-red-700')
-                        : BUTTON_PRIMARY
-                    }
-                    onClick={() => (recording ? stopDictation() : void startDictation())}
-                    aria-label={recording ? 'Stop dictation' : 'Start dictation'}
-                    title={recording ? 'Stop and add to the box' : 'Dictate instead of typing'}
-                  >
-                    {transcribing ? (
-                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" role="status" aria-label="Transcribing" />
-                    ) : recording ? (
-                      <span className="flex items-center gap-2">
-                        <span className="h-2.5 w-2.5 animate-pulse rounded-sm bg-white" aria-hidden="true" />
-                        Stop
-                      </span>
-                    ) : (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <rect x="9" y="2" width="6" height="12" rx="3" />
-                        <path d="M5 10a7 7 0 0 0 14 0" />
-                        <line x1="12" y1="17" x2="12" y2="22" />
-                      </svg>
-                    )}
-                  </button>
-                  <input
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder={recording ? 'Listening... tap Stop when you are done' : transcribing ? 'Turning your words into text...' : 'Describe your product...'}
-                    className={`${INPUT_CLASS} flex-1`}
-                    disabled={authLoading}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        if (!current || loading || authLoading || !input) return;
-                        const msg = input;
-                        setInput('');
-                        void send('chat', msg);
-                      }
-                    }}
-                  />
+                  <div className="relative flex-1">
+                    <input
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      placeholder={recording ? 'Listening... tap the mic to stop' : transcribing ? 'Turning your words into text...' : 'Describe your product...'}
+                      className={`${INPUT_CLASS} h-full pr-12`}
+                      disabled={authLoading}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          if (!current || loading || authLoading || !input) return;
+                          const msg = input;
+                          setInput('');
+                          void send('chat', msg);
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      disabled={authLoading || transcribing}
+                      className={`absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-not-allowed ${
+                        recording ? 'animate-pulse bg-red-50 text-red-600' : 'text-muted hover:bg-accentMuted hover:text-slate-900'
+                      }`}
+                      onClick={() => (recording ? stopDictation() : void startDictation())}
+                      aria-label={recording ? 'Stop dictation' : 'Start dictation'}
+                      title={recording ? 'Stop and add to the box' : 'Dictate instead of typing'}
+                    >
+                      {transcribing ? (
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-accent/30 border-t-accent" role="status" aria-label="Transcribing" />
+                      ) : (
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <rect x="9" y="2" width="6" height="12" rx="3" />
+                          <path d="M5 10a7 7 0 0 0 14 0" />
+                          <line x1="12" y1="17" x2="12" y2="22" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                   <button
                     disabled={!current || loading || authLoading || !input}
                     className={BUTTON_PRIMARY}
