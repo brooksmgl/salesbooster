@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     return withCORS(NextResponse.json({ error: 'Not signed in' }, { status: 401 }));
   }
 
-  const requester = req.ip || req.headers.get('x-forwarded-for') || 'public';
+  const requester = req.headers.get('x-forwarded-for') || 'public';
   const rl = rateLimit(`${requester}:transcribe`, 20);
   if (!rl.ok) return withCORS(NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 }));
 

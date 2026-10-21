@@ -5,7 +5,8 @@ import { getSessionUser } from '@/lib/session';
 
 export { options as OPTIONS };
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const user = await getSessionUser(req);
   if (!user) {
     return withCORS(NextResponse.json({ error: 'Not signed in' }, { status: 401 }));
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const { error: lookupError } = await sb
     .from('listings')
     .select('id')
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('user_id', user.id)
     .single();
   if (lookupError) {

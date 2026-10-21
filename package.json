@@ -9,10 +9,11 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
-    "next": "^14.2.5",
+    "next": "^15.5.28",
     "openai": "^4.55.3",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "sharp": "^0.35.5"
   },
   "type": "module",
   "devDependencies": {

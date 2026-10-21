@@ -130,7 +130,8 @@ function extractListingFields(message: string) {
   return sections;
 }
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const user = await getSessionUser(req);
   if (!user) {
     return withCORS(NextResponse.json({ error: 'Not signed in' }, { status: 401 }));
@@ -139,7 +140,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (!mode || !MODE_PROMPT[mode]) return withCORS(NextResponse.json({ error: 'Invalid mode' }, { status: 400 }));
 
   // Rate limit per user+mode
-  const requester = req.ip || req.headers.get('x-forwarded-for') || 'public';
+  const requester = req.headers.get('x-forwarded-for') || 'public';
   const rl = rateLimit(`${requester}:${mode}`, 30);
   if (!rl.ok) return withCORS(NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 }));
 
@@ -147,7 +148,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const { data: listing, error: e0 } = await sb
     .from('listings')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('user_id', user.id)
     .single();
   if (e0 || !listing) return withCORS(NextResponse.json({ error: e0?.message || 'Not found' }, { status: 404 }));
@@ -250,7 +251,7 @@ Vision: ${listing.vision_summary ?? ''}`;
   const { error: e1, data: updated } = await sb
     .from('listings')
     .update(updates)
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('user_id', user.id)
     .select('*')
     .single();

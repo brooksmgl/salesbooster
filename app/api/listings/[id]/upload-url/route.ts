@@ -6,7 +6,8 @@ import { getSessionUser } from '@/lib/session';
 
 export { options as OPTIONS };
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const user = await getSessionUser(req);
   if (!user) {
     return withCORS(NextResponse.json({ error: 'Not signed in' }, { status: 401 }));
@@ -16,14 +17,14 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const { error: e0 } = await sb
     .from('listings')
     .select('id')
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('user_id', user.id)
     .single();
   if (e0) return withCORS(NextResponse.json({ error: e0.message }, { status: 404 }));
 
   const filename = randomUUID();
   const ext = 'jpg'; // client can still send any; change as needed
-  const path = `${user.id}/${params.id}/${filename}.${ext}`;
+  const path = `${user.id}/${id}/${filename}.${ext}`;
 
   // Signed upload URL
   const { data, error } = await sb.storage.from('listing-images').createSignedUploadUrl(path);
