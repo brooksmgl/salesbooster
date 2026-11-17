@@ -8,8 +8,8 @@ type ChatMessage = {
   content: string;
 };
 
-const USER_BUBBLE = 'max-w-[75%] rounded-2xl bg-[#F3E7E2] px-4 py-3 text-sm text-slate-800';
-const ASSISTANT_BUBBLE = 'max-w-[75%] rounded-2xl bg-white px-4 py-3 text-sm text-slate-900';
+const USER_BUBBLE = 'max-w-[85%] lg:max-w-[75%] rounded-2xl bg-[#F3E7E2] px-4 py-3 text-sm text-slate-800';
+const ASSISTANT_BUBBLE = 'max-w-[85%] lg:max-w-[75%] rounded-2xl bg-white px-4 py-3 text-sm text-slate-900';
 
 const IMAGE_REGEX = /uploaded image:\s*(\S+)/i;
 

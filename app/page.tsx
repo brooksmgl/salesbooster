@@ -21,8 +21,8 @@ type SessionUser = {
 
 const API = (path: string) => `/api${path}`;
 
-const PANEL_CLASS = 'bg-panel border border-border rounded-xl p-5 flex flex-col min-h-0';
-const SECTION_CLASS = 'bg-panel border border-border rounded-xl p-5 min-h-0';
+const PANEL_CLASS = 'bg-panel border border-border rounded-xl p-4 lg:p-5 flex flex-col min-h-0';
+const SECTION_CLASS = 'bg-panel border border-border rounded-xl p-3 lg:p-5 min-h-0';
 const CARD_CLASS = 'bg-panel border border-border rounded-xl p-4 min-h-0';
 const BUTTON_PRIMARY =
   'inline-flex items-center justify-center rounded-lg border border-transparent bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-60';
@@ -33,9 +33,17 @@ const BUTTON_TERTIARY =
 const BUTTON_TERTIARY_SMALL =
   'inline-flex items-center justify-center rounded-lg border border-border bg-white px-2 py-1 text-xs font-semibold text-slate-900 transition hover:bg-accentMuted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-60';
 const INPUT_CLASS =
-  'w-full rounded-lg border border-border bg-white px-4 py-3 text-sm text-slate-900 placeholder-muted transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/40 disabled:cursor-not-allowed disabled:opacity-60';
+  'w-full rounded-lg border border-border bg-white px-4 py-3 text-base lg:text-sm text-slate-900 placeholder-muted transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/40 disabled:cursor-not-allowed disabled:opacity-60';
 const NOTICE_CLASS =
   'fixed bottom-6 left-1/2 z-30 -translate-x-1/2 transform rounded-xl border border-border bg-white px-4 py-2 text-sm font-semibold text-slate-900';
+
+type MobileTab = 'listings' | 'chat' | 'assets';
+
+const MOBILE_TABS: { id: MobileTab; label: string }[] = [
+  { id: 'listings', label: 'Listings' },
+  { id: 'chat', label: 'Chat' },
+  { id: 'assets', label: 'Assets' },
+];
 
 async function safeJson(res: Response) {
   try {
@@ -64,6 +72,25 @@ export default function AppPage() {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const recordTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const chatLength = current?.chat_history?.length ?? 0;
+  // Phones show one panel at a time (Listings / Chat / Assets); desktop shows all three.
+  const [mobileTab, setMobileTab] = useState<MobileTab>('chat');
+  // Dot on the Assets tab when the current listing's assets change while it's not open.
+  const currentId = current?.id;
+  const assetsKey = current
+    ? [current.id, current.title, current.tags, current.description, current.vision_summary].join('|')
+    : '';
+  const [assetsSeenKey, setAssetsSeenKey] = useState('');
+  const hasAssets = !!(current?.title || current?.tags || current?.description || current?.vision_summary);
+  const assetsUpdated = hasAssets && assetsKey !== assetsSeenKey && mobileTab !== 'assets';
+
+  useEffect(() => {
+    setAssetsSeenKey(assetsKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentId]);
+
+  useEffect(() => {
+    if (mobileTab === 'assets') setAssetsSeenKey(assetsKey);
+  }, [mobileTab, assetsKey]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -462,7 +489,7 @@ export default function AppPage() {
     requestAnimationFrame(() => {
       el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
     });
-  }, [chatLength]);
+  }, [chatLength, mobileTab]);
 
   // Stop any in-progress recording (and release the mic) if the page unmounts.
   useEffect(() => {
@@ -558,7 +585,7 @@ export default function AppPage() {
   const altText = extractAltText(current?.vision_summary);
 
   return (
-    <div className="min-h-screen bg-background px-6 py-6 text-foreground">
+    <div className="min-h-screen bg-background px-3 py-3 text-foreground lg:px-6 lg:py-6">
       {!authChecked ? (
         <div className="flex min-h-[60vh] items-center justify-center">
           <div
@@ -599,11 +626,54 @@ export default function AppPage() {
         </div>
       ) : (
         <>
-          <div className="grid h-[calc(100vh-48px)] grid-cols-[320px_minmax(0,1fr)_320px] gap-4">
-            <aside className={PANEL_CLASS}>
+          <div className="flex h-[calc(100dvh-24px)] flex-col gap-3 lg:h-[calc(100vh-48px)]">
+          <div className="flex items-center justify-between gap-3 lg:hidden">
+            <div>
+              <p className="text-lg font-semibold text-slate-900">Sales Booster</p>
+              <p className="text-xs text-muted">Etsy Listing Generator</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={() => void manualRefresh()} disabled={loading || authLoading} className={BUTTON_SMALL}>
+                Refresh
+              </button>
+              <button onClick={() => void logout()} disabled={authLoading || loading} className={BUTTON_TERTIARY}>
+                Sign out
+              </button>
+            </div>
+          </div>
+          <nav className="grid grid-cols-3 gap-1 rounded-xl border border-border bg-panel p-1 lg:hidden" aria-label="Sections">
+            {MOBILE_TABS.map((tab) => {
+              const active = mobileTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setMobileTab(tab.id)}
+                  className={`relative rounded-lg px-3 py-2 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ${
+                    active ? 'bg-accent text-white' : 'text-slate-700 hover:bg-accentMuted'
+                  }`}
+                >
+                  {tab.label}
+                  {tab.id === 'assets' && assetsUpdated && (
+                    <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-accent" aria-label="Updated" />
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+          <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(0,1fr)] gap-4 lg:grid-cols-[320px_minmax(0,1fr)_320px]">
+            <aside className={`${PANEL_CLASS} ${mobileTab === 'listings' ? '' : 'hidden'} lg:flex`}>
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-base font-semibold text-slate-900">My Listings</h2>
-                <button onClick={newListing} disabled={loading || authLoading} className={BUTTON_SMALL}>
+                <button
+                  onClick={() => {
+                    setMobileTab('chat');
+                    void newListing();
+                  }}
+                  disabled={loading || authLoading}
+                  className={BUTTON_SMALL}
+                >
                   + New Listing
                 </button>
               </div>
@@ -620,12 +690,14 @@ export default function AppPage() {
                         tabIndex={0}
                         onClick={() => {
                           setMenuOpenId(null);
+                          setMobileTab('chat');
                           void fetchOne(l.id);
                         }}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' || e.key === ' ') {
                             e.preventDefault();
                             setMenuOpenId(null);
+                            setMobileTab('chat');
                             void fetchOne(l.id);
                           }
                         }}
@@ -670,9 +742,14 @@ export default function AppPage() {
                   })
                 )}
               </div>
+              <p className="mt-auto break-all pt-4 text-xs text-muted lg:hidden">
+                Signed in as {user.email || `${user.id.slice(0, 8)}...`}
+              </p>
             </aside>
-            <div className="relative grid grid-rows-[auto_minmax(0,1fr)_auto] gap-4 overflow-hidden">
-              <section className={`${SECTION_CLASS} flex items-center justify-between`}>
+            <div
+              className={`relative ${mobileTab === 'chat' ? 'grid' : 'hidden'} grid-rows-[minmax(0,1fr)_auto] gap-3 overflow-hidden lg:grid lg:grid-rows-[auto_minmax(0,1fr)_auto] lg:gap-4`}
+            >
+              <section className={`${SECTION_CLASS} hidden items-center justify-between lg:flex`}>
                 <div>
                   <p className="text-xl font-semibold text-slate-900">Sales Booster</p>
                   <p className="text-xs text-muted">Etsy Listing Generator</p>
@@ -692,7 +769,7 @@ export default function AppPage() {
                   <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
                     <p className="text-sm text-muted">Create a listing to upload an image or start chatting.</p>
                     <button
-                      onClick={newListing}
+                      onClick={() => void newListing()}
                       disabled={loading || authLoading}
                       className={BUTTON_PRIMARY}
                     >
@@ -720,7 +797,7 @@ export default function AppPage() {
                 )}
               </section>
               <section className={SECTION_CLASS}>
-                <div className="flex items-stretch gap-3">
+                <div className="flex items-stretch gap-2 lg:gap-3">
                   <input
                     ref={fileRef}
                     type="file"
@@ -732,8 +809,19 @@ export default function AppPage() {
                       if (fileRef.current) fileRef.current.value = '';
                     }}
                   />
-                  <button disabled={!current || loading || authLoading} className={BUTTON_PRIMARY} onClick={() => fileRef.current?.click()}>
-                    Upload Image
+                  <button
+                    disabled={!current || loading || authLoading}
+                    className={BUTTON_PRIMARY}
+                    onClick={() => fileRef.current?.click()}
+                    aria-label="Upload Image"
+                    title="Upload Image"
+                  >
+                    <svg className="sm:hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <rect x="3" y="3" width="18" height="18" rx="2" />
+                      <circle cx="9" cy="9" r="2" />
+                      <path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21" />
+                    </svg>
+                    <span className="hidden sm:inline">Upload Image</span>
                   </button>
                   <div className="relative flex-1">
                     <input
@@ -787,7 +875,7 @@ export default function AppPage() {
                 </div>
               </section>
             </div>
-            <aside className={`${PANEL_CLASS} overflow-y-auto`}>
+            <aside className={`${PANEL_CLASS} overflow-y-auto ${mobileTab === 'assets' ? '' : 'hidden'} lg:flex`}>
               <h2 className="mb-3 text-base font-semibold text-slate-900">Listing Assets</h2>
               <div className="flex flex-col gap-3 pr-1">
                 <Card title="Title" text={current?.title} onCopy={() => copy(current?.title)} />
@@ -796,6 +884,7 @@ export default function AppPage() {
                 <Card title="Alt Text" text={altText} onCopy={() => copy(altText)} />
               </div>
             </aside>
+          </div>
           </div>
           {notice && <div className={NOTICE_CLASS}>{notice}</div>}
         </>
