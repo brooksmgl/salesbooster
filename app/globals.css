@@ -18,8 +18,10 @@ body {
   @apply bg-background text-foreground font-sans text-lg;
 }
 
-#salesbooster-root {
-  min-height: 100vh;
+@media (min-width: 1024px) {
+  #salesbooster-root {
+    min-height: 100vh;
+  }
 }
 
 .rich-text {
