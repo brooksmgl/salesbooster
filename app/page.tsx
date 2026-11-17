@@ -92,6 +92,21 @@ export default function AppPage() {
     if (mobileTab === 'assets') setAssetsSeenKey(assetsKey);
   }, [mobileTab, assetsKey]);
 
+  // iOS Safari counts the area behind its floating toolbar in 100vh/dvh/svh, so the
+  // page ran taller than the screen. innerHeight is the part people can actually see.
+  useEffect(() => {
+    const setAppHeight = () => {
+      document.documentElement.style.setProperty('--app-h', `${window.innerHeight}px`);
+    };
+    setAppHeight();
+    window.addEventListener('resize', setAppHeight);
+    window.addEventListener('orientationchange', setAppHeight);
+    return () => {
+      window.removeEventListener('resize', setAppHeight);
+      window.removeEventListener('orientationchange', setAppHeight);
+    };
+  }, []);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const id = params.get('l');
@@ -585,7 +600,7 @@ export default function AppPage() {
   const altText = extractAltText(current?.vision_summary);
 
   return (
-    <div className="min-h-screen bg-background px-3 py-3 text-foreground lg:px-6 lg:py-6">
+    <div className="w-full max-w-full overflow-x-clip bg-background px-3 py-3 text-foreground lg:min-h-screen lg:px-6 lg:py-6">
       {!authChecked ? (
         <div className="flex min-h-[60vh] items-center justify-center">
           <div
@@ -626,13 +641,13 @@ export default function AppPage() {
         </div>
       ) : (
         <>
-          <div className="flex h-[calc(100dvh-24px)] flex-col gap-3 lg:h-[calc(100vh-48px)]">
-          <div className="flex items-center justify-between gap-3 lg:hidden">
-            <div>
-              <p className="text-lg font-semibold text-slate-900">Sales Booster</p>
-              <p className="text-xs text-muted">Etsy Listing Generator</p>
+          <div className="flex h-[calc(var(--app-h,100svh)-24px)] min-w-0 flex-col gap-3 lg:h-[calc(100vh-48px)]">
+          <div className="flex min-w-0 items-center justify-between gap-3 lg:hidden">
+            <div className="min-w-0">
+              <p className="truncate text-lg font-semibold text-slate-900">Sales Booster</p>
+              <p className="truncate text-xs text-muted">Etsy Listing Generator</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-2">
               <button onClick={() => void manualRefresh()} disabled={loading || authLoading} className={BUTTON_SMALL}>
                 Refresh
               </button>
@@ -823,8 +838,9 @@ export default function AppPage() {
                     </svg>
                     <span className="hidden sm:inline">Upload Image</span>
                   </button>
-                  <div className="relative flex-1">
+                  <div className="relative min-w-0 flex-1">
                     <input
+                      size={1}
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       placeholder={recording ? 'Listening... tap the mic to stop' : transcribing ? 'Turning your words into text...' : 'Describe your product...'}
